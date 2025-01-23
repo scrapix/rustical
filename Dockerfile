@@ -17,7 +17,7 @@ ARG BUILDPLATFORM
 # Set cross-compilation environment variables for different architectures
 RUN case "$TARGETPLATFORM" in \
       "linux/amd64") echo "x86_64-unknown-linux-musl" > /tmp/rust_target ;; \
-      "linux/arm64") echo "aarch64-unknown-linux-musl" > /tmp/rust_target ;; \
+      #"linux/arm64") echo "aarch64-unknown-linux-musl" > /tmp/rust_target ;; \
       *) echo "Unsupported platform $TARGETPLATFORM" && exit 1 ;; \
     esac
 
@@ -39,14 +39,14 @@ COPY --from=planner /app/recipe.json recipe.json
 
 # Install dependencies for cross-compilation (platform-specific)
 RUN case ${TARGETPLATFORM} in \
-        "linux/arm64") apk add --no-cache protobuf-compiler g++-aarch64-linux-gnu libc6-dev-arm64-cross libssl-dev:arm64 ca-certificates ;; \
+        #"linux/arm64") apk add --no-cache protobuf-compiler g++-aarch64-linux-gnu libc6-dev-arm64-cross libssl-dev:arm64 ca-certificates ;; \
         "linux/amd64") apk add --no-cache protobuf-compiler g++-x86_64-linux-gnu libc6-dev-x86_64-cross libssl-dev ca-certificates ;; \
         *) exit 1 ;; \
     esac
 
 # Build the project for the target platform
 RUN case ${TARGETPLATFORM} in \
-        "linux/arm64") CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc cargo chef cook --release --target aarch64-unknown-linux-musl --recipe-path recipe.json ;; \
+       # "linux/arm64") CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc cargo chef cook --release --target aarch64-unknown-linux-musl --recipe-path recipe.json ;; \
         "linux/amd64") cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json ;; \
         *) exit 1 ;; \
     esac
@@ -56,7 +56,7 @@ COPY . /app
 
 # Final build step for target platform
 RUN case ${TARGETPLATFORM} in \
-        "linux/arm64") CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc cargo build --release --target aarch64-unknown-linux-musl ;; \
+        #"linux/arm64") CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc cargo build --release --target aarch64-unknown-linux-musl ;; \
         "linux/amd64") cargo build --release --target x86_64-unknown-linux-musl ;; \
         *) exit 1 ;; \
     esac
@@ -64,7 +64,7 @@ RUN case ${TARGETPLATFORM} in \
 # Copy the compiled binary from the target directory
 RUN set -ex; \
     case ${TARGETPLATFORM} in \
-        "linux/arm64") target='/app/target/aarch64-unknown-linux-musl/release';; \
+       # "linux/arm64") target='/app/target/aarch64-unknown-linux-musl/release';; \
         "linux/amd64") target='/app/target/x86_64-unknown-linux-musl/release';; \
         *) exit 1 ;; \
     esac; \
